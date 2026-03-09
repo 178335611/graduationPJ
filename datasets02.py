@@ -5,7 +5,7 @@ import torch
 from torch.utils.data import Dataset, Subset, random_split
 from torchvision import datasets, transforms
 import copy
-from config02 import *
+from config_k import *
 
 
 class RemapDataset(Dataset):
