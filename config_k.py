@@ -11,7 +11,7 @@ def is_kaggle():
 # --- 路径配置 ---
 if is_kaggle():
     # Kaggle路径
-    DATA_DIR = '/kaggle/input/oxford-102-flower-dataset/oxford-102-flower-dataset'
+    DATA_DIR = '/kaggle/input/datasets/hishamkhdair/102flowers-data/102flowers'
     BASE_OUTPUT_DIR = '/kaggle/working/experiments'
     print("🌊 检测到Kaggle环境")
 else:
