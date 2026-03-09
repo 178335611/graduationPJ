@@ -6,7 +6,7 @@ import json
 import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime
-from config_k import is_kaggle
+from config_k import *
 
 def create_experiment_dir():
     """创建实验目录"""
