@@ -26,7 +26,7 @@ WANTED_CLASSES = []  # 空列表使用全部102类
 if is_kaggle():
     # Kaggle P100/T4优化
     BATCH_SIZE = 64          # P100显存大，增大batch
-    NUM_EPOCHS = 100
+    NUM_EPOCHS = 30
     LEARNING_RATE = 5e-4     # 稍大，收敛快
     WEIGHT_DECAY = 1e-4
     NUM_WORKERS = 4          # Kaggle CPU核心数
@@ -46,7 +46,7 @@ PRETRAINED = True
 
 # --- 调度器 ---
 SCHEDULER_PATIENCE = 3
-CHECKPOINT_INTERVAL = 10   # Kaggle保存间隔大些，减少IO
+CHECKPOINT_INTERVAL = 10  # Kaggle保存间隔大些，减少IO
 
 # --- 早停 ---
-EARLY_STOPPING_PATIENCE = 10
+EARLY_STOPPING_PATIENCE = 5

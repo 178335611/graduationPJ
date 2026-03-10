@@ -66,5 +66,4 @@ def get_scheduler(optimizer):
         mode='min',  # 监控loss（更敏感）
         factor=0.5,  # 温和衰减
         patience=3,  # 3epoch不提升就降lr
-        verbose=True
     )
