@@ -10,20 +10,19 @@ from config_k import *
 def build_model(num_classes, device):
     """构建ResNet50，解冻layer3和layer4"""
 
-    print(f'🚀 使用ResNet50（{num_classes}类）')
+    print(f'-- 使用ResNet50（{num_classes}类）')
     model = models.resnet50(weights='IMAGENET1K_V2')
+    # 冻结更多层（只训练FC）
+    for param in model.parameters():
+        param.requires_grad = False
 
-    # 冻结layer1和layer2，解冻layer3和layer4
-    for name, param in model.named_parameters():
-        if 'layer1' in name or 'layer2' in name:
-            param.requires_grad = False
-        else:
-            param.requires_grad = True
+    # 只解冻FC层
+    for param in model.fc.parameters():
+        param.requires_grad = True
 
-    print(f'🔓 冻结layer1-2，训练layer3-4和FC层')
-    print(f'   可训练参数占比: {sum(p.requires_grad for p in model.parameters()) / len(list(model.parameters())):.1%}')
+    print(f'-- 冻结全部特征层，仅训练FC层')
 
-    # 修改FC层
+    # 修改FC
     num_ftrs = model.fc.in_features
     model.fc = nn.Sequential(
         nn.Dropout(0.5),
@@ -31,7 +30,6 @@ def build_model(num_classes, device):
     )
 
     return model.to(device)
-
 
 def get_optimizer(model):
     """分层学习率优化"""
