@@ -26,11 +26,11 @@ WANTED_CLASSES = []  # 空列表使用全部102类
 if is_kaggle():
     # Kaggle P100/T4优化
     BATCH_SIZE = 64          # P100显存大，增大batch
-    NUM_EPOCHS = 30
+    NUM_EPOCHS = 2
     LEARNING_RATE = 5e-4     # 稍大，收敛快
     WEIGHT_DECAY = 1e-4
     NUM_WORKERS = 4          # Kaggle CPU核心数
-    USE_AMP = True           # 自动混合精度加速
+    USE_AMP = False          # 自动混合精度加速
 else:
     # 本地保守设置
     BATCH_SIZE = 32

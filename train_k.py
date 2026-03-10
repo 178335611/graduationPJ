@@ -22,9 +22,11 @@ def train_epoch(model, dataloader, criterion, optimizer, device, phase, scaler=N
 
     epoch_start = time.time()
 
-    for inputs, labels in dataloader:
+    for i, (inputs, labels) in enumerate(dataloader):
         inputs = inputs.to(device)
         labels = labels.to(device)
+
+        print(f"Batch {i}: input shape={inputs.shape}, device={inputs.device}, label sum={labels.sum()}")
 
         optimizer.zero_grad()
 
