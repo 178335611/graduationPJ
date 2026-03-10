@@ -61,9 +61,16 @@ def load_dataset():
     """加载Oxford 102 Flower CSV数据集"""
 
     # 【定义】局部变量DATA_ROOT
-    DATA_ROOT = '/kaggle/input/datasets/hishamkhdair/102flowers-data/102flowers'
-    CSV_PATH = os.path.join(DATA_ROOT, 'labels.csv')
-    IMAGE_DIR = os.path.join(DATA_ROOT, 'train')  # 【定义】图片目录
+    if is_kaggle():
+        print("--检测到Kaggle环境--")
+        DATA_ROOT = '/kaggle/input/datasets/hishamkhdair/102flowers-data/102flowers'
+        CSV_PATH = os.path.join(DATA_ROOT, 'labels.csv')
+        IMAGE_DIR = os.path.join(DATA_ROOT, 'train')  # 【定义】图片目录
+    else:
+        # 本地路径
+        DATA_ROOT = r'D:\01bishe\pj001\datasets'
+        CSV_PATH = os.path.join(DATA_ROOT, 'labels.csv')
+        IMAGE_DIR = os.path.join(DATA_ROOT, 'flower1\jpg')  # 【定义】图片目录
 
     print(f"📂 数据目录: {DATA_ROOT}")
     print(f"📄 CSV: {CSV_PATH}")
@@ -93,7 +100,7 @@ def load_dataset():
     val_dataset = FlowerCSVDataset(val_df, IMAGE_DIR, transforms_dict['val'])
 
     # DataLoader
-    train_loader = DataLoader(train_dataset, BATCH_SIZE, shuffle=True, num_workers=NUM_WORKERS, pin_memory=True)
+    train_loader = DataLoader(train_dataset, BATCH_SIZE, shuffle=True, num_workers=0, pin_memory=False)
     val_loader = DataLoader(val_dataset, BATCH_SIZE, shuffle=False, num_workers=NUM_WORKERS, pin_memory=True)
 
     num_classes = train_dataset.num_classes

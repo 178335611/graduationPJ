@@ -109,7 +109,8 @@ def train_model(model, dataloaders, dataset_sizes, criterion, optimizer,
     # 训练循环
     for epoch in range(start_epoch, NUM_EPOCHS):
         print(f'\n{"="*70}')
-        print(f'Epoch {epoch + 1}/{NUM_EPOCHS} | GPU: {torch.cuda.get_device_name(0)}')
+        if is_kaggle():
+            print(f'Epoch {epoch + 1}/{NUM_EPOCHS} | GPU: {torch.cuda.get_device_name(0)}')
         print(f'{"="*70}')
 
         # 训练和验证
