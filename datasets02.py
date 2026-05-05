@@ -72,8 +72,8 @@ def load_dataset():
         CSV_PATH = os.path.join(DATA_ROOT, 'labels.csv')
         IMAGE_DIR = os.path.join(DATA_ROOT, 'flower1\jpg')  # 【定义】图片目录
 
-    print(f"📂 数据目录: {DATA_ROOT}")
-    print(f"📄 CSV: {CSV_PATH}")
+    print(f" 数据目录: {DATA_ROOT}")
+    print(f" CSV: {CSV_PATH}")
 
     if not os.path.exists(CSV_PATH):
         raise FileNotFoundError(f"CSV不存在: {CSV_PATH}")
@@ -83,7 +83,7 @@ def load_dataset():
 
     # 读取CSV
     full_df = pd.read_csv(CSV_PATH)
-    print(f"📊 总样本: {len(full_df)}, 类别: {full_df['label'].nunique()}")
+    print(f" 总样本: {len(full_df)}, 类别: {full_df['label'].nunique()}")
 
     # 划分
     train_size = int(0.8 * len(full_df))
@@ -108,6 +108,6 @@ def load_dataset():
     dataset_sizes = {'train': len(train_dataset), 'val': len(val_dataset)}
     class_mapping = train_dataset.label_to_idx
 
-    print(f"✅ 训练: {dataset_sizes['train']}, 验证: {dataset_sizes['val']}")
+    print(f" 训练: {dataset_sizes['train']}, 验证: {dataset_sizes['val']}")
 
     return train_loader, val_loader, class_names, num_classes, dataset_sizes, class_mapping

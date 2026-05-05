@@ -33,7 +33,6 @@ MOMENTUM = 0.9
 
 # 'vgg16' 或 'efficientnet_b0' or 'resnet50'
 IMAGE_SIZE = 224
-USE_PRETRAINED = True
 PRETRAINED = True
 
 # --- 调度器 ---
