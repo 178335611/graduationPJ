@@ -23,7 +23,7 @@ else:
 WANTED_CLASSES = []  # 空列表使用全部102类
 
 # --- 模型配置 ---
-MODEL_NAME = 'efficientnet_b0'
+MODEL_NAME = 'vgg16'
 OPTIMIZER = 'AdamW'
 MOMENTUM = 0.9
 
