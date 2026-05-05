@@ -65,7 +65,7 @@ def save_history(history, csv_path, json_path):
 
     # Kaggle：输出CSV预览
     if is_kaggle():
-        print(f"\n📊 训练历史预览（最后5epoch）：")
+        print(f"\n训练历史预览（最后5epoch）：")
         print(df.tail().to_string(index=False))
 
 

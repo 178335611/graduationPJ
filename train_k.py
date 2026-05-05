@@ -100,13 +100,13 @@ def train_model(model, dataloaders, dataset_sizes, criterion, optimizer,
             best_model_wts = checkpoint.get('best_model_wts', copy.deepcopy(model.state_dict()))
 
             # Kaggle：显示恢复信息
-            print(f"📌 从 epoch {start_epoch} 继续 | 历史最佳: {best_acc:.4f}")
+            print(f"从 epoch {start_epoch} 继续 | 历史最佳: {best_acc:.4f}")
         else:
             model.load_state_dict(checkpoint)
-            print("⚠️ 纯权重格式，优化器状态未恢复")
+            print("纯权重格式，优化器状态未恢复")
             start_epoch = 0
     else:
-        print("🚀 从头开始训练")
+        print("从头开始训练")
 
     # 训练循环
     for epoch in range(start_epoch, NUM_EPOCHS):
@@ -146,10 +146,10 @@ def train_model(model, dataloaders, dataset_sizes, criterion, optimizer,
                         'best_acc': best_acc,
                         'history': history,
                     }, paths['best_model'])
-                    print(f"✨ 新的最佳模型! Acc: {best_acc:.4f}")
+                    print(f" 新的最佳模型! Acc: {best_acc:.4f}")
                 else:
                     patience_counter += 1
-                    print(f"⏳ 早停计数: {patience_counter}/{EARLY_STOPPING_PATIENCE}")
+                    print(f" 早停计数: {patience_counter}/{EARLY_STOPPING_PATIENCE}")
 
         # 统计信息
         total_time = epoch_times['train'] + epoch_times['val']
@@ -164,7 +164,7 @@ def train_model(model, dataloaders, dataset_sizes, criterion, optimizer,
         else:
             gpu_info = ""
 
-        print(f"⏱️  Epoch总耗时: {total_time:.1f}s | 已用: {elapsed/60:.1f}min | 预估剩余: {eta:.1f}min{gpu_info}")
+        print(f"Epoch总耗时: {total_time:.1f}s | 已用: {elapsed/60:.1f}min | 预估剩余: {eta:.1f}min{gpu_info}")
 
         # 学习率调整
         if scheduler is not None:
@@ -172,11 +172,11 @@ def train_model(model, dataloaders, dataset_sizes, criterion, optimizer,
             scheduler.step(current_val_loss)
 
             lrs = [f"{g['lr']:.2e}" for g in optimizer.param_groups]
-            print(f"📉 学习率: {lrs}")
+            print(f" 学习率: {lrs}")
 
         # 早停检查
         if patience_counter >= EARLY_STOPPING_PATIENCE:
-            print(f"\n🛑 早停触发！连续{EARLY_STOPPING_PATIENCE}epoch无提升")
+            print(f"\n 早停触发！连续{EARLY_STOPPING_PATIENCE}epoch无提升")
             print(f"   最佳epoch: {epoch - patience_counter}, Acc: {best_acc:.4f}")
             break
 
@@ -199,13 +199,13 @@ def train_model(model, dataloaders, dataset_sizes, criterion, optimizer,
                 save_dict['scheduler_state_dict'] = scheduler.state_dict()
 
             torch.save(save_dict, ckpt_path)
-            print(f"💾 检查点: epoch_{epoch + 1}.pth")
+            print(f" 检查点: epoch_{epoch + 1}.pth")
 
     # 训练结束
     time_elapsed = time.time() - since
 
     print(f'\n{"="*70}')
-    print(f'🎉 训练完成!')
+    print(f' 训练完成!')
     print(f'   总耗时: {time_elapsed // 60:.0f}m {time_elapsed % 60:.0f}s')
     print(f'   最佳验证准确率: {best_acc:.4f} ({best_acc*100:.2f}%)')
     print(f'   平均每epoch: {time_elapsed/(epoch+1):.1f}s')

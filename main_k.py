@@ -23,22 +23,22 @@ from utils import *
 def main():
     """Kaggle主函数"""
     print(f"\n{'#'*70}")
-    print(f"# 🌸 花卉分类训练 - {'Kaggle' if is_kaggle() else '本地'}环境")
+    print(f"# 花卉分类训练 - {'Kaggle' if is_kaggle() else '本地'}环境")
     print(f"{'#'*70}")
     
     # 创建实验目录
     exp_dir, timestamp = create_experiment_dir()
     paths = get_paths(exp_dir)
     
-    print(f"📁 实验目录: {exp_dir}")
-    print(f"💻 设备: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU'}")
+    print(f"实验目录: {exp_dir}")
+    print(f"设备: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU'}")
     
     # 设备
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     
     # 加载数据
     print(f"\n{'─'*70}")
-    print("📊 加载数据集...")
+    print("加载数据集...")
     train_loader, val_loader, class_names, num_classes, dataset_sizes, class_mapping = load_dataset()
     dataloaders = {'train': train_loader, 'val': val_loader}
     print(f"{'─'*70}")
@@ -62,7 +62,7 @@ def main():
     
     # 构建模型
     print(f"\n{'─'*70}")
-    print("🏗️  构建模型...")
+    print("构建模型...")
     model = build_model(num_classes, device)
     
     # 统计参数量
@@ -90,7 +90,7 @@ def main():
     
     # 训练
     print(f"\n{'='*70}")
-    print("🚀 开始训练")
+    print("开始训练")
     print(f"{'='*70}")
     
     best_model_wts, history = train_model(
@@ -102,13 +102,13 @@ def main():
     
     # 保存结果
     print(f"\n{'─'*70}")
-    print("💾 保存结果...")
+    print("保存结果...")
     save_history(history, paths['history_csv'], paths['history_json'])
     plot_curves(history, paths['plot'])
     
     # 最终评估
     print(f"\n{'─'*70}")
-    print("🧪 最终评估...")
+    print("最终评估...")
     model.load_state_dict(best_model_wts)
     evaluate_model(model, val_loader, criterion, device, paths['results'], class_names)
     
@@ -118,7 +118,7 @@ def main():
     # Kaggle：输出下载链接
     if is_kaggle():
         print(f"\n{'='*70}")
-        print("📥 下载链接（右侧Output文件夹）：")
+        print("下载链接（右侧Output文件夹）：")
         for name, path in paths.items():
             if os.path.exists(path):
                 size = os.path.getsize(path) / 1024**2

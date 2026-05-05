@@ -210,10 +210,10 @@ def train(model, train_loader, val_loader):
             best_acc = v_acc
             patience = 0
             torch.save(model.state_dict(), f'{OUTPUT_DIR}/best_model.pth')
-            print(f'✨ New best: {best_acc:.4f}')
+            print(f' New best: {best_acc:.4f}')
         else:
             patience += 1
-            print(f'⏳ Patience: {patience}/10')
+            print(f' Patience: {patience}/10')
             if patience >= 10:
                 print('Early stopping!')
                 break
@@ -255,7 +255,7 @@ def plot(history, save_path):
 
 # ========== 6. 主函数 ==========
 def main():
-    print(f'🌸 Flower Classification on {"Kaggle" if IS_KAGGLE else "Local"}')
+    print(f' Flower Classification on {"Kaggle" if IS_KAGGLE else "Local"}')
     print(f'GPU: {torch.cuda.get_device_name(0)}')
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
