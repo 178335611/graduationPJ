@@ -116,6 +116,9 @@ def build_model(num_classes, device):
 
 def get_optimizer(model):
     #  方案1/2：单学习率
+    print(f"   [Config] MODEL={MODEL_NAME}, OPT={OPTIMIZER}, LR={LEARNING_RATE}")
+    print(f"   [Config] USE_HIER_LR={USE_HIER_LR},"
+          f" USE_PRETRAINED={USE_PRETRAINED}, USE_ATTENTION={USE_ATTENTION}")
     if not USE_HIER_LR:
         print(f"   [Optimizer] 单学习率模式 (lr={LEARNING_RATE})")
         return torch.optim.AdamW(model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
