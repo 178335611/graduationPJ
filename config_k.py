@@ -34,6 +34,8 @@ MOMENTUM = 0.9
 # 'vgg16' 或 'efficientnet_b0' or 'resnet50'
 IMAGE_SIZE = 224
 PRETRAINED = True
+#是否使用断点恢复
+RESUME_CHECKPOINT = None
 
 # --- 调度器 ---
 SCHEDULER_PATIENCE = 3

@@ -83,10 +83,11 @@ def main():
     if is_kaggle() and os.path.exists('/kaggle/working'):
         import glob
         checkpoints = glob.glob('/kaggle/working/**/checkpoint_epoch_*.pth', recursive=True)
-        if checkpoints:
-            # 找最新的
-            RESUME_CHECKPOINT = max(checkpoints, key=os.path.getmtime)
-            print(f"🔍 自动找到检查点: {RESUME_CHECKPOINT}")
+        if RESUME_CHECKPOINT != None:
+            if checkpoints:
+                # 找最新的
+                RESUME_CHECKPOINT = max(checkpoints, key=os.path.getmtime)
+                print(f"🔍 自动找到检查点: {RESUME_CHECKPOINT}")
     
     # 训练
     print(f"\n{'='*70}")
