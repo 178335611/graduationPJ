@@ -4,17 +4,21 @@
 import torch
 import torch.nn as nn
 from torchvision import models
-# from config_k import *
-from config_k import (
-    MODEL_NAME,
-    USE_PRETRAINED,
-    LEARNING_RATE,
-    WEIGHT_DECAY,
-    OPTIMIZER,
-    MOMENTUM,      # SGD 需要
-    # SCHEDULER,     # get_scheduler 需要
-    NUM_EPOCHS     # scheduler 可能需要
-)
+from config_k import *
+
+
+class ChannelAttention1D(nn.Module):
+    """作用于展平特征向量的通道注意力 [B, C] -> [B, C]"""
+    def __init__(self, channels, reduction=16):
+        super().__init__()
+        self.fc = nn.Sequential(
+            nn.Linear(channels, channels // reduction, bias=False),
+            nn.ReLU(inplace=True),
+            nn.Linear(channels // reduction, channels, bias=False),
+            nn.Sigmoid()
+        )
+    def forward(self, x):
+        return x * self.fc(x)
 
 def build_model(num_classes, device):
     """构建ResNet50，解冻layer3和layer4"""
@@ -32,109 +36,111 @@ def build_model(num_classes, device):
         model.classifier[1] = nn.Linear(model.classifier[1].in_features, num_classes)
 
     elif MODEL_NAME == 'resnet50':
-        print(f'-- 使用ResNet50（{num_classes}类）')
-        model = models.resnet50(weights='IMAGENET1K_V2')
-        # 冻结更多层（只训练FC）
-        for param in model.parameters():
-            param.requires_grad = False
+        # 1. 加载预训练权重（torchvision 新版 API）
+        weights = models.ResNet50_Weights.DEFAULT if USE_PRETRAINED else None
+        model = models.resnet50(weights=weights)
 
-        # 只解冻FC层
-        for param in model.fc.parameters():
-            param.requires_grad = True
+        feat_dim = model.fc.in_features  # ResNet50 固定为 2048
 
-        print(f'-- 冻结全部特征层，仅训练FC层')
-        # 修改FC
-        num_ftrs = model.fc.in_features
-        model.fc = nn.Sequential(
-            nn.Dropout(0.5),
-            nn.Linear(num_ftrs, num_classes)
-        )
+        # 2. 动态重建分类头
+        new_head = []
+        if USE_ATTENTION:
+            new_head.append(ChannelAttention1D(feat_dim, reduction=16))
+        new_head.append(nn.Linear(feat_dim, num_classes))
+
+        # 替换原 model.fc（保持 forward 流程不变：avgpool -> flatten -> new_head）
+        model.fc = nn.Sequential(*new_head)
+
+        return model.to(device)
 
     return model.to(device)
 
+# def get_optimizer(model):
+#
+#     """分层学习率优化 (自动适配 ResNet/VGG/EfficientNet)"""
+#     # 调试：确认配置已正确加载
+#     print(f"   [Config] MODEL={MODEL_NAME}, OPT={OPTIMIZER}, LR={LEARNING_RATE}")
+#     early_backbone = []  # 底层/主干特征 (学习率最低)
+#     late_backbone = []  # 高层特征 (学习率中等，仅部分模型使用)
+#     head_params = []  # 分类头/全连接层 (学习率最高)
+#
+#     model_name = MODEL_NAME.lower()
+#
+#     for name, param in model.named_parameters():
+#         if not param.requires_grad:
+#             continue
+#
+#         # 🟦 ResNet 系列 (layer1~4 + fc)
+#         if 'resnet' in model_name:
+#             if 'fc' in name:
+#                 head_params.append(param)
+#             elif 'layer4' in name:
+#                 late_backbone.append(param)
+#             else:  # layer1, layer2, layer3, conv1, bn1 等
+#                 early_backbone.append(param)
+#
+#         # 🟨 VGG 系列 (features + classifier)
+#         elif 'vgg' in model_name:
+#             if 'classifier' in name:
+#                 head_params.append(param)
+#             else:
+#                 early_backbone.append(param)
+#
+#         # 🟩 EfficientNet 系列 (features + classifier)
+#         elif 'efficientnet' in model_name:
+#             if 'classifier' in name:
+#                 head_params.append(param)
+#             else:
+#                 early_backbone.append(param)
+#
+#         # ⚪ 兜底：无法识别的层默认归入分类头
+#         else:
+#             head_params.append(param)
+#
+#     # 构建参数组 (自动过滤空列表)
+#     param_groups = []
+#     if early_backbone:
+#         param_groups.append({'params': early_backbone, 'lr': LEARNING_RATE * 0.1, 'weight_decay': WEIGHT_DECAY})
+#     if late_backbone:
+#         param_groups.append({'params': late_backbone, 'lr': LEARNING_RATE * 0.5, 'weight_decay': WEIGHT_DECAY})
+#     if head_params:
+#         param_groups.append({'params': head_params, 'lr': LEARNING_RATE, 'weight_decay': WEIGHT_DECAY})
+#
+#     # 动态绑定优化器
+#     if OPTIMIZER == 'AdamW':
+#         return torch.optim.AdamW(param_groups)
+#     elif OPTIMIZER == 'SGD':
+#         return torch.optim.SGD(param_groups, momentum=MOMENTUM)
+#     else:
+#         return torch.optim.Adam(param_groups)
+
 def get_optimizer(model):
-    """分层学习率优化"""
-    # # 分层设置学习率
-    # layer3_params = []
-    # layer4_params = []
-    # fc_params = []
-    #
-    # for name, param in model.named_parameters():
-    #     if not param.requires_grad:
-    #         continue
-    #     if 'layer3' in name:
-    #         layer3_params.append(param)
-    #     elif 'layer4' in name:
-    #         layer4_params.append(param)
-    #     else:
-    #         fc_params.append(param)
-    #
-    # param_groups = [
-    #     {'params': layer3_params, 'lr': LEARNING_RATE * 0.1},  # 特征层慢
-    #     {'params': layer4_params, 'lr': LEARNING_RATE * 0.5},  # 高层稍快
-    #     {'params': fc_params, 'lr': LEARNING_RATE}  # 分类层最快
-    # ]
-    #
-    # return torch.optim.Adam(param_groups, weight_decay=WEIGHT_DECAY)
+    #  方案1/2：单学习率
+    if not USE_HIER_LR:
+        print(f"   [Optimizer] 单学习率模式 (lr={LEARNING_RATE})")
+        return torch.optim.AdamW(model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
 
-    """分层学习率优化 (自动适配 ResNet/VGG/EfficientNet)"""
-    # 调试：确认配置已正确加载
-    print(f"   [Config] MODEL={MODEL_NAME}, OPT={OPTIMIZER}, LR={LEARNING_RATE}")
-    early_backbone = []  # 底层/主干特征 (学习率最低)
-    late_backbone = []  # 高层特征 (学习率中等，仅部分模型使用)
-    head_params = []  # 分类头/全连接层 (学习率最高)
-
-    model_name = MODEL_NAME.lower()
-
+    # 方案3/4：ResNet50 分层学习率
+    early, mid, late, head = [], [], [], []
     for name, param in model.named_parameters():
-        if not param.requires_grad:
-            continue
-
-        # 🟦 ResNet 系列 (layer1~4 + fc)
-        if 'resnet' in model_name:
-            if 'fc' in name:
-                head_params.append(param)
-            elif 'layer4' in name:
-                late_backbone.append(param)
-            else:  # layer1, layer2, layer3, conv1, bn1 等
-                early_backbone.append(param)
-
-        # 🟨 VGG 系列 (features + classifier)
-        elif 'vgg' in model_name:
-            if 'classifier' in name:
-                head_params.append(param)
-            else:
-                early_backbone.append(param)
-
-        # 🟩 EfficientNet 系列 (features + classifier)
-        elif 'efficientnet' in model_name:
-            if 'classifier' in name:
-                head_params.append(param)
-            else:
-                early_backbone.append(param)
-
-        # ⚪ 兜底：无法识别的层默认归入分类头
+        if not param.requires_grad: continue
+        if 'layer4' in name:
+            late.append(param)
+        elif 'layer3' in name:
+            mid.append(param)
+        elif 'fc' in name:
+            head.append(param)
         else:
-            head_params.append(param)
+            early.append(param)  # layer1, layer2, conv1, bn1
 
-    # 构建参数组 (自动过滤空列表)
-    param_groups = []
-    if early_backbone:
-        param_groups.append({'params': early_backbone, 'lr': LEARNING_RATE * 0.1, 'weight_decay': WEIGHT_DECAY})
-    if late_backbone:
-        param_groups.append({'params': late_backbone, 'lr': LEARNING_RATE * 0.5, 'weight_decay': WEIGHT_DECAY})
-    if head_params:
-        param_groups.append({'params': head_params, 'lr': LEARNING_RATE, 'weight_decay': WEIGHT_DECAY})
-
-    # 动态绑定优化器
-    if OPTIMIZER == 'AdamW':
-        return torch.optim.AdamW(param_groups)
-    elif OPTIMIZER == 'SGD':
-        return torch.optim.SGD(param_groups, momentum=MOMENTUM)
-    else:
-        return torch.optim.Adam(param_groups)
-
-
+    param_groups = [
+        {'params': early, 'lr': LEARNING_RATE * 0.1, 'weight_decay': WEIGHT_DECAY},
+        {'params': mid, 'lr': LEARNING_RATE * 0.5, 'weight_decay': WEIGHT_DECAY},
+        {'params': late, 'lr': LEARNING_RATE, 'weight_decay': WEIGHT_DECAY},
+        {'params': head, 'lr': LEARNING_RATE, 'weight_decay': WEIGHT_DECAY}
+    ]
+    print(f"   [Optimizer] 分层学习率模式 (4个参数组)")
+    return torch.optim.AdamW(param_groups)
 
 def get_scheduler(optimizer):
     """Plateau调度器，patience=3"""
