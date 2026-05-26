@@ -24,7 +24,7 @@ WANTED_CLASSES = []  # 空列表使用全部102类
 # ================= 消融实验控制开关 =================
 USE_PRETRAINED = True    # 方案1填 False，其余填 True
 USE_HIER_LR = True         # 方案1/2填 False，方案3/4填 True
-USE_ATTENTION = False        # 仅方案4填 True，其余填 False
+USE_ATTENTION = True        # 仅方案4填 True，其余填 False
 
 # --- 模型配置 ---
 MODEL_NAME = 'resnet50'

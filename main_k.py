@@ -20,6 +20,25 @@ from evaluate import evaluate_model, predict_single_image
 from utils import *
 
 
+# 【新增】专门用于计算测试集最终指标的函数
+def get_test_metrics(model, test_loader, criterion, device):
+    """计算测试集的Loss和Acc"""
+    model.eval()
+    running_loss = 0.0
+    running_corrects = 0
+    with torch.no_grad():
+        for inputs, labels in test_loader:
+            inputs, labels = inputs.to(device), labels.to(device)
+            outputs = model(inputs)
+            loss = criterion(outputs, labels)
+            _, preds = torch.max(outputs, 1)
+            running_loss += loss.item() * inputs.size(0)
+            running_corrects += torch.sum(preds == labels.data)
+
+    test_loss = running_loss / len(test_loader.dataset)
+    test_acc = running_corrects.double() / len(test_loader.dataset)
+    return test_loss, test_acc.item()
+
 def main():
     """Kaggle主函数"""
     print(f"\n{'#'*70}")
@@ -35,13 +54,16 @@ def main():
     
     # 设备
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    
-    # 加载数据
-    print(f"\n{'─'*70}")
+
+    # ================= 【修改 1：接收 test_loader】 =================
+    print(f"\n{'─' * 70}")
     print("加载数据集...")
-    train_loader, val_loader, class_names, num_classes, dataset_sizes, class_mapping = load_dataset()
+    # 注意这里多了一个 test_loader
+    train_loader, val_loader, test_loader, class_names, num_classes, dataset_sizes, class_mapping = load_dataset()
+
+    # 训练过程只需要 train 和 val（测试集不参与训练和早停）
     dataloaders = {'train': train_loader, 'val': val_loader}
-    print(f"{'─'*70}")
+    print(f"{'─' * 70}")
     
     # 保存配置
     config = {
@@ -100,21 +122,31 @@ def main():
         resume_from=RESUME_CHECKPOINT,
         scheduler=scheduler
     )
-    
-    # 保存结果
-    print(f"\n{'─'*70}")
-    print("保存结果...")
-    save_history(history, paths['history_csv'], paths['history_json'])
-    plot_curves(history, paths['plot'])
-    
-    # 最终评估
-    print(f"\n{'─'*70}")
-    print("最终评估...")
+
+    # 2. 训练结束后的最终评估
+    print(f"\n{'─' * 70}")
+    print("最终验证集评估 (Validation Set)...")
     model.load_state_dict(best_model_wts)
     evaluate_model(model, val_loader, criterion, device, paths['results'], class_names)
-    
-    # 保存最终模型
-    torch.save(model.state_dict(), paths['final_model'])
+
+    print(f"\n{'─' * 70}")
+    print("最终测试集盲测评估 (Test Set)...")
+    test_results_path = paths['results'].replace('results', 'test_results')
+    evaluate_model(model, test_loader, criterion, device, test_results_path, class_names)
+
+    # 3. 【核心修改】获取 Test 指标并追加到 history 中，以便保存进 Log
+    test_loss, test_acc = get_test_metrics(model, test_loader, criterion, device)
+    print(f"🏆 最终测试集盲测结果 -> Loss: {test_loss:.4f} | Acc: {test_acc:.4f}")
+
+    # 将最终结果以标量形式存入 history 字典
+    history['final_test_loss'] = test_loss
+    history['final_test_acc'] = test_acc
+
+    # 4. 保存结果 (此时 save_history 会将 test 结果一并写入 JSON/CSV)
+    print(f"\n{'─' * 70}")
+    print("保存结果与日志...")
+    save_history(history, paths['history_csv'], paths['history_json'])
+    plot_curves(history, paths['plot'])  # 画图函数依然只画 train 和 val 的曲线
     
     # Kaggle：输出下载链接
     if is_kaggle():
