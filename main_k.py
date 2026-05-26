@@ -131,7 +131,8 @@ def main():
 
     print(f"\n{'─' * 70}")
     print("最终测试集盲测评估 (Test Set)...")
-    test_results_path = paths['results'].replace('results', 'test_results')
+    # test_results_path = paths['results'].replace('results', 'test_results')
+    test_results_path = paths['results'].replace('.txt', '_test.txt')
     evaluate_model(model, test_loader, criterion, device, test_results_path, class_names)
 
     # 3. 【核心修改】获取 Test 指标并追加到 history 中，以便保存进 Log
